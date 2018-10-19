@@ -29,5 +29,7 @@ https://sourceforge.net/projects/fbc/files/
 - Be sure to have GTK installed
 - Compile with:
 ```
-fbc src/fbgb.bas
+(Linux) fbc src/fbgb.bas
+( Win ) fbc.exe src\fbgb.bas  
 ```
+
