@@ -4,7 +4,8 @@
 #define CPU_DEBUG		65473	'F4
 #define LOG_DEBUG		65474	'F5
 
-#include once "alex-macros.bi"
+#include once "alex-macros.bas"
+#include once "file.bi"
 
 declare sub tiles_zeichnen()
 declare sub schreibe_log(texts varchar)
@@ -18,25 +19,31 @@ global varchar logs(32)
 #undef palette
 global uint8 palette
 
-#include once "ui.bi"
-#include once "mbc.bi"
-#include once "cpu.bi"
-#include once "debug.bi"
+#include once "ui.bas"
+#include once "mbc.bas"
+#include once "cpu.bas"
+#include once "debug.bas"
 
 local uint8 tmpbyte
 local uint32 position
 
 var ff=freefile
-'open command(1) for binary as #ff
-open "roms/tetris.gb" for binary as #ff
+if fileexists(command(1)) then
+	open command(1) for binary as #ff
+else
+	print "ROM '"+command(1)+"' nicht gefunden!"
+	print "./fbgb [ROM].gb"
+	end
+end if
+'open "roms/tetris.gb" for binary as #ff
 'open "gb-test-roms-master/cpu_instrs/cpu_instrs.gb" for binary as #ff
 'open "mooneye-gb_hwtests/emulator-only/mbc1/ram_64Kb.gb" for binary as #ff
-	anzahl_rom_banks = lof(ff) shr 14
-	do
-		get #ff,,tmpbyte
-		rom_speicher(position)=tmpbyte
-		position += 1
-	loop until eof(ff)
+anzahl_rom_banks = lof(ff) shr 14
+do
+	get #ff,,tmpbyte
+	rom_speicher(position)=tmpbyte
+	position += 1
+loop until eof(ff)
 close #ff
 
 for i in (0,&hFFFF / 2)

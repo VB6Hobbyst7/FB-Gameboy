@@ -156,7 +156,7 @@ function read_word(adresse uint16) uint16
 end function
 
 global int32 zeit
-#include once "befehle.bi"
+#include once "befehle.bas"
 
 'NAME			 	 L   T  SUB
 global as opcode opcodes(&hFF) => { _ 
@@ -433,7 +433,7 @@ _
 ("RST 0x38        ", 0,  4, @RST_38) _			'FF
 }
 
-#include once "gpu.bi"
+#include once "gpu.bas"
 
 sub cpu_start()
 	af=&h01B0
