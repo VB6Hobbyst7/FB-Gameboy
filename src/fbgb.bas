@@ -30,12 +30,12 @@ local uint32 position
 var ff=freefile
 if fileexists(command(1)) then
 	open command(1) for binary as #ff
+	screenres_gtk(160 * zoom, 144 * zoom, "GB")
 else
-	print "ROM '"+command(1)+"' nicht gefunden!"
-	print "./fbgb [ROM].gb"
-	end
+	screenres_gtk(160 * zoom, 144 * zoom, "GB")
+	open datei_oeffnen() for binary as #ff
 end if
-'open "roms/tetris.gb" for binary as #ff
+'open "roms/flappyboy.gb" for binary as #ff
 'open "gb-test-roms-master/cpu_instrs/cpu_instrs.gb" for binary as #ff
 'open "mooneye-gb_hwtests/emulator-only/mbc1/ram_64Kb.gb" for binary as #ff
 anzahl_rom_banks = lof(ff) shr 14
@@ -49,8 +49,6 @@ close #ff
 for i in (0,&hFFFF / 2)
 	speicher(i) = rom_speicher(i)
 next
-
-screenres_gtk(160 * zoom, 144 * zoom, "GB")
 	
 lade_font()
 speicher_img = imagecreate(xmax, ymax, 0)
@@ -59,37 +57,45 @@ cpu_start()
 
 function main(datas gptr)bool
 	if win->has_toplevel_focus = 1 then 	
-		tasten(0) = &h0F
-		tasten(1) = &h0F
+		if keyup = 119 then : tasten(1) or= &h04
+		elseif keyup = 115 then : tasten(1) or= &h08
+		elseif keyup = 97 then : tasten(1) or= &h02
+		elseif keyup = 100 then : tasten(1) or= &h01
+			
+		elseif keyup = 113 then : tasten(0) or= &h01
+		elseif keyup = 101 then : tasten(0) or= &h02
+		elseif keyup = 65507 then : tasten(0) or= &h04
+		elseif keyup = 32 then : tasten(0) or= &h08
+		end if
+		
 		if keydown = 119 then			'W	=	Hoch
 			tasten(1) and= &h0B
 			stop = 0 : speicher(M_INTERRUPT_FLAG) or= C_JOYPAD
-		end if:if keydown = 115 then	'S	=	Runter
+		elseif keydown = 115 then		'S	=	Runter
 			tasten(1) and= &h07
 			stop = 0 : speicher(M_INTERRUPT_FLAG) or= C_JOYPAD
-		end if:if keydown = 97 then		'A	=	Links
+		elseif keydown = 97 then		'A	=	Links
 			tasten(1) and= &h0D
 			stop = 0 : speicher(M_INTERRUPT_FLAG) or= C_JOYPAD
-		end if:if keydown = 100 then	'D	=	Rechts
+		elseif keydown = 100 then		'D	=	Rechts
 			tasten(1) and= &h0E
 			stop = 0 : speicher(M_INTERRUPT_FLAG) or= C_JOYPAD
 			
-		end if:if keydown = 113 then	'Q	=	A
+		elseif keydown = 113 then		'Q	=	A
 			tasten(0) and= &h0E
 			stop = 0 : speicher(M_INTERRUPT_FLAG) or= C_JOYPAD
-		end if:if keydown = 101 then	'E	=	B
+		elseif keydown = 101 then		'E	=	B
 			tasten(0) and= &h0D
 			stop = 0 : speicher(M_INTERRUPT_FLAG) or= C_JOYPAD
-		end if:if  keydown = 65507 then	'Strg =	Select
+		elseif  keydown = 65507 then	'Strg =	Select
 			tasten(0) and= &h0B
 			stop = 0 : speicher(M_INTERRUPT_FLAG) or= C_JOYPAD
-		end if:if  keydown = 32 then	'Leer =	Start
+		elseif  keydown = 32 then		'Leer =	Start
 			tasten(0) and= &h07
 			stop = 0 : speicher(M_INTERRUPT_FLAG) or= C_JOYPAD
 		end if
 		
-		if keydown = 65363 then t_offset += 1
-		if keydown = 65361 then t_offset -= 1
+		if keyup <> 0 then keyup = 0
 		
 		gtk_widget_get_pointer(fb_img, @mx, @my)
 		
@@ -103,6 +109,7 @@ function main(datas gptr)bool
 				gpu()
 				interrupts()
 				zyklen += zeit
+				if ende = true then exit do
 			loop until zyklen > 17556
 			fps_alt = fps_jetzt
 		end if
@@ -119,10 +126,12 @@ function main(datas gptr)bool
 		end if
 	end if
 	
+	if ende = true then gtk_main_quit()
+	
 	return true
 end function 
 
-g_timeout_add(2,cast(any ptr,@main),0)
+g_timeout_add(10,cast(any ptr,@main),0)
 fps_alt = timer
 gtk_main()
 imagedestroy cpu_img

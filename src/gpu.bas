@@ -12,8 +12,6 @@ end enum
 global uint8 gpu_mode = C_MODE_HBLANK
 global int32 gpu_zeit
 
-global as single t_offset 
-
 global uint32 buffer_bg(160*144)
 global uint32 pk_palette(3) = {&hFFEFFF , &h8CB5F7 , &h9C7384 , &h101018}
 global uint32 sw_palette(3) = {&hCDDBE0 , &h949FA8 , &h666B70 , &h262B2B}
@@ -91,7 +89,7 @@ sub scanline_zeichnen()
 		local uint8 SpriteGroesse = iif((speicher(M_LCD_CONTROL) and &h04) > 0,16,8)
 	
 		for index in(0,39)	'40 Sprites in OAM
-			local uint8 SpriteX = speicher(M_OAM + index * 4 + 1) - 8, SpriteY = speicher(M_OAM + index * 4) - 16
+			local int32 SpriteX = speicher(M_OAM + index * 4 + 1) - 8, SpriteY = speicher(M_OAM + index * 4) - 16
 			local uint8 TileID = speicher(M_OAM + index * 4 + 2), Flags = speicher(M_OAM + index * 4 + 3)
 			if SpriteGroesse = 16 then TileID and= &hFE
 

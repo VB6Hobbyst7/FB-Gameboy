@@ -478,6 +478,9 @@ sub cpu_start()
 	speicher(M_WY) = 				&h00
 	speicher(M_WX) = 				&h00
 	speicher(M_INTERRUPT_ENABLE) = 	&h00
+	
+	tasten(0) = &h0F
+	tasten(1) = &h0F
 end sub
 
 sub cpu()

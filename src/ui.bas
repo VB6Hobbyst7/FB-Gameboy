@@ -1,10 +1,11 @@
 #include once "gtk/gtk.bi"
 
 global uint64 xmax,ymax
-global uint32 win_xmax, win_ymax, keydown, keyhit, keyrelease
+global uint32 win_xmax, win_ymax, keydown, keyup
 global ui ptr fb_img
 global varchar fenster_titel
 global as _GtkWindow ptr win
+global bool ende
 
 class t_font
 	uint8 data(9,9)
@@ -26,13 +27,15 @@ global as t_font font(120)
 	g_signal_connect(win, "key-press-event", G_CALLBACK(@taste_unten), NULL)
 	g_signal_connect(win, "key-release-event", G_CALLBACK(@taste_oben), NULL)
 	
+	g_signal_connect(win, "delete-event", G_CALLBACK(@fenster_weg), NULL)
+	
 	gtk_widget_show_all(cast(GTKWidget ptr,win))
 	
 	screenres xmax, ymax, 24,,-1 or &h40
 #endmacro
 
 function skalieren cdecl(widget ui ptr, event as GdkEventExpose ptr, userdata as gpointer)bool
-    gtk_window_get_size(win, @win_xmax, @win_ymax)
+    gtk_window_get_size(GTK_WIDGET(win), @win_xmax, @win_ymax)
     if win_xmax < win_ymax + zoom * 16 then
 		zoom = win_xmax / 160
 	else
@@ -44,15 +47,20 @@ function skalieren cdecl(widget ui ptr, event as GdkEventExpose ptr, userdata as
     return true
 end function
 
+function fenster_weg(widget ui ptr, event as GdkEvent ptr, userdata as gpointer)bool
+	ende = true
+	return true
+end function
+
 function taste_unten(widget ui ptr, event as GdkEventKey ptr)bool
 	if event->keyval <> 0 then keydown = event->keyval
 	return true
 end function
 
 function taste_oben(widget ui ptr, event as GdkEventKey ptr)bool
-	if event->keyval <> 0 then keyhit = event->keyval
+	if event->keyval <> 0 then keyup = event->keyval
 	if event->keyval = keydown then 
-		if keyhit = TEMPO_DEBUG then		'Geschwindigkeit ändern, von 0% - 100%
+		if keyup = TEMPO_DEBUG then			'Geschwindigkeit ändern, von 0% - 100%
 			select case as const tempo
 				case 100:tempo = 0
 				case 0:tempo = 1
@@ -61,7 +69,7 @@ function taste_oben(widget ui ptr, event as GdkEventKey ptr)bool
 				case 50:tempo = 100
 			end select
 			gtk_window_set_title( GTK_WINDOW(win), fenster_titel + " " + str(tempo) + "%" + " PAL" + str(palette))
-		elseif keyhit = FARBEN then			'Farbpalette ändern, S/W und Grün
+		elseif keyup = FARBEN then			'Farbpalette ändern, S/W und Grün
 			select case as const palette
 				case 0 : palette = 1
 				case 1 : palette = 2
@@ -94,6 +102,29 @@ sub text(x uint32, y uint32, text2 varchar, farbe uint32=&hFFFFFF)
 		end select
 	next
 end sub
+
+function datei_oeffnen()varchar
+	var dialog=gtk_file_chooser_dialog_new ("ROM öffnen",GTK_WINDOW(win),GTK_FILE_CHOOSER_ACTION_OPEN,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,NULL)
+	var filter=gtk_file_filter_new()
+	gtk_file_filter_add_pattern (filter, "*.gb")
+	gtk_file_filter_add_pattern (filter, "*.gbc")
+	gtk_file_chooser_add_filter(GTK_File_Chooser(dialog), filter)
+	gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE)
+	if gtk_dialog_run (GTK_DIALOG (dialog)) = GTK_RESPONSE_ACCEPT then
+		local as gchar ptr tmp
+		local varchar rom_name
+		local uint32 i2
+		tmp=gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog))
+		do
+			rom_name+=chr(cast(ubyte ptr,tmp)[i2])
+			i2+=1
+		loop until tmp[i2]=0
+		gtk_widget_destroy (dialog)
+		return rom_name
+	else
+		end
+	end if
+end function
 
 #macro lade_font()
 	local imgptr abc=imagecreate(855,9), tmp_char=imagecreate(9,9)
