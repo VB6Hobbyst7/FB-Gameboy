@@ -7,7 +7,7 @@ Run "fbgb" from command line and pass the rom-file as the parameter:
 ```
 ./fbgb rom.gb
 ```
-Games get saved and loaded automatically when you start/stop the emulator. The savegames are stored in the "saves"-folder.
+Games are saved and loaded automatically when you start/stop the emulator. The savegames are stored in the "saves"-folder.
 
 #### Controls
 - [WASD] Moving
