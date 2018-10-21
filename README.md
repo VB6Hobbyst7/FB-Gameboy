@@ -1,12 +1,13 @@
 # FB-Gameboy
 Gameboy emulator written in FreeBasic.
-Sound and savegames aren't supported at the moment.
+Sound isn't supported at the moment.
 
 #### Usage
 Run "fbgb" from command line and pass the rom-file as the parameter:
 ```
 ./fbgb rom.gb
 ```
+Games get saved and loaded automatically when you start/stop the emulator. The savegames are stored in the "saves"-folder.
 
 #### Controls
 - [WASD] Moving
@@ -19,6 +20,7 @@ Run "fbgb" from command line and pass the rom-file as the parameter:
 - [F3] Displays the memory
 - [F4] Displays a disassembly of the code, aswell as the current state of the CPU-registers
 - [F5] Displays a log of the last "interesting" actions, aswell as some misc. infos
+- [F6] Reset
 
 #### Screenshots
 ![Bild](https://github.com/IchMagBier/FB-Gameboy/blob/master/screens/bild1.png)![Bild](https://github.com/IchMagBier/FB-Gameboy/blob/master/screens/bild3.png)![Bild](https://github.com/IchMagBier/FB-Gameboy/blob/master/screens/bild2.png)![Bild](https://github.com/IchMagBier/FB-Gameboy/blob/master/screens/bild4.png)
@@ -29,7 +31,8 @@ https://sourceforge.net/projects/fbc/files/
 - Be sure to have GTK installed
 - Compile with:
 ```
-(Linux) fbc src/fbgb.bas
-( Win ) fbc.exe src\fbgb.bas  
+(Linux) fbc src/fbgb.bas -x fbgb
+( Win ) fbc.exe src\fbgb.bas -x fbgb.exe
 ```
+
 

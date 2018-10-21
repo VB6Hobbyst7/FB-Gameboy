@@ -21,14 +21,7 @@ global uint32 bl_palette(3) = {&hC2E4FF , &h56A4DC , &h4C60A9 , &h362942}
 
 sub scanline_zeichnen()
 	if (speicher(M_LCD_CONTROL) and &h80) = 0 then exit sub	'LCD aus
-		
-    if (not speicher(M_LCD_CONTROL) and &h01) > 0 then		'Hintergrund deaktiviert -> Weiß machen
-		for i in(0,160)
-            buffer_bg((speicher(M_SCANLINE) * 160) + i) = 0
-        next
-        exit sub
-    end if
-    
+
     local uint8 bg_pal(3), obp0_pal(3), obp1_pal(3)
     bg_pal(3)=speicher(M_BGP) shr 6
 	bg_pal(2)=speicher(M_BGP) shr 4 and &b00000011
@@ -45,21 +38,23 @@ sub scanline_zeichnen()
 	
 	'######## Ebene 0 - Background ########
 	
-	local int32 MapDaten=iif((speicher(M_LCD_CONTROL) and &h08) > 0,&h9C00,&h9800)	'Pointer auf die Map
-	local int32 TileDaten=iif((speicher(M_LCD_CONTROL) and &h10) > 0,&h8000,&h9000)	'Pointer auf die Tile-Grafiken im VRAM
-    
-	local uint8 TileY = ((speicher(M_SCANLINE) + speicher(M_SCROLLY) - 3.5) / 8) mod 32	'Wieso 3.5?
-	local uint8 TileYOffset  = (speicher(M_SCANLINE) + speicher(M_SCROLLY)) mod 8
-
-    for i in(0,159)
-		local uint8 TileX = ((speicher(M_SCROLLX) + i - 3.5) / 8) mod 32			'Wieso 3.5?
-		local uint8 TileID = speicher(MapDaten + (TileY * 32) + TileX)				'Index des Tiles im VRAM
-		local int32 TileDataPtr = iif(TileDaten=&h8000,TileDaten + TileID * 16,TileDaten + cast(byte,TileID) * 16) + (TileYOffset * 2) 
+	if (not speicher(M_LCD_CONTROL) and &h01) > 0 then	'Wird die Ebene benutzt?
+		local int32 MapDaten=iif((speicher(M_LCD_CONTROL) and &h08) > 0,&h9C00,&h9800)	'Pointer auf die Map
+		local int32 TileDaten=iif((speicher(M_LCD_CONTROL) and &h10) > 0,&h8000,&h9000)	'Pointer auf die Tile-Grafiken im VRAM
 		
-        local uint8 BitNummer = 7 - (speicher(M_SCROLLX) + i) mod 8
-		local uint8 Farbe = ((speicher(TileDataPtr) shr BitNummer) and 1) or ((speicher(TileDataPtr + 1) shr BitNummer) and 1) shl 1
-		buffer_bg((speicher(M_SCANLINE) * 160) + i) = bg_pal(Farbe)
-	next
+		local uint8 TileY = ((speicher(M_SCANLINE) + speicher(M_SCROLLY) - 3.5) / 8) mod 32	'Wieso 3.5?
+		local uint8 TileYOffset  = (speicher(M_SCANLINE) + speicher(M_SCROLLY)) mod 8
+
+		for i in(0,159)
+			local uint8 TileX = ((speicher(M_SCROLLX) + i - 3.5) / 8) mod 32			'Wieso 3.5?
+			local uint8 TileID = speicher(MapDaten + (TileY * 32) + TileX)				'Index des Tiles im VRAM
+			local int32 TileDataPtr = iif(TileDaten=&h8000,TileDaten + TileID * 16,TileDaten + cast(byte,TileID) * 16) + (TileYOffset * 2) 
+			
+			local uint8 BitNummer = 7 - (speicher(M_SCROLLX) + i) mod 8
+			local uint8 Farbe = ((speicher(TileDataPtr) shr BitNummer) and 1) or ((speicher(TileDataPtr + 1) shr BitNummer) and 1) shl 1
+			buffer_bg((speicher(M_SCANLINE) * 160) + i) = bg_pal(Farbe)
+		next
+	end if
 	
 	'######## Ebene 1 - Window ########
 	

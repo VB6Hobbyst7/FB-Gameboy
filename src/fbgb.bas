@@ -3,6 +3,7 @@
 #define SPEICHER_DEBUG 	65472	'F3
 #define CPU_DEBUG		65473	'F4
 #define LOG_DEBUG		65474	'F5
+#define CPU_RESET		65475	'F6
 
 #include once "alex-macros.bas"
 #include once "file.bi"
@@ -16,6 +17,7 @@ global uint8 tempo = 100
 global imgptr speicher_img, cpu_img
 global float fps_alt, fps_jetzt, delta
 global varchar logs(32)
+global uint32 max_zyklen = 17556
 #undef palette
 global uint8 palette
 
@@ -23,6 +25,8 @@ global uint8 palette
 #include once "mbc.bas"
 #include once "cpu.bas"
 #include once "debug.bas"
+#include once "sound.bas"
+#include once "savegame.bas"
 
 local uint8 tmpbyte
 local uint32 position
@@ -35,9 +39,6 @@ else
 	screenres_gtk(160 * zoom, 144 * zoom, "GB")
 	open datei_oeffnen() for binary as #ff
 end if
-'open "roms/flappyboy.gb" for binary as #ff
-'open "gb-test-roms-master/cpu_instrs/cpu_instrs.gb" for binary as #ff
-'open "mooneye-gb_hwtests/emulator-only/mbc1/ram_64Kb.gb" for binary as #ff
 anzahl_rom_banks = lof(ff) shr 14
 do
 	get #ff,,tmpbyte
@@ -53,7 +54,14 @@ next
 lade_font()
 speicher_img = imagecreate(xmax, ymax, 0)
 cpu_img = imagecreate(xmax, ymax, 0)
-cpu_start()
+
+local uint16 checksum_rom
+checksum_rom = speicher(&h014E) + (speicher(&h014F) shl 8)
+if fileexists("saves/c"+hex(checksum_rom,4)+".sav") then
+	savegame_laden(checksum_rom)
+else
+	cpu_start()
+end if
 
 function main(datas gptr)bool
 	if win->has_toplevel_focus = 1 then 	
@@ -108,9 +116,10 @@ function main(datas gptr)bool
 				timers()
 				gpu()
 				interrupts()
+				sound()
 				zyklen += zeit
 				if ende = true then exit do
-			loop until zyklen > 17556
+			loop until zyklen > max_zyklen
 			fps_alt = fps_jetzt
 		end if
 		
@@ -123,6 +132,8 @@ function main(datas gptr)bool
 		elseif keydown = LOG_DEBUG then		'F5 -> Log und ROM-Infos
 			frame_zeichnen()
 			debug_log()
+		elseif keydown = CPU_RESET then		'F6 -> Reset
+			cpu_start()
 		end if
 	end if
 	
@@ -134,6 +145,8 @@ end function
 g_timeout_add(10,cast(any ptr,@main),0)
 fps_alt = timer
 gtk_main()
+savegame_speichern(checksum_rom)
+'BASS_Free()
 imagedestroy cpu_img
 imagedestroy speicher_img
 end

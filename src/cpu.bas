@@ -4,39 +4,62 @@ global uint32 anzahl_rom_banks
 global uint8 tasten(1)
 
 'Adressen in 'speicher()'
-const M_MBC=&h0147
-const M_GBC=&h0143
+#define M_MBC 				&h0147
+#define M_GBC 				&h0143
 
-const M_JOYP=&hFF00
-const M_SB=&hFF01
-const M_SC=&hFF02
-const M_DIV=&hFF04
-const M_TIMA=&hFF05
-const M_TMA=&hFF06
-const M_TAC=&hFF07
-const M_INTERRUPT_FLAG=&hFF0F
-const M_LCD_CONTROL=&hFF40
-const M_LCD_STATUS=&hFF41
-const M_SCROLLY=&hFF42
-const M_SCROLLX=&hFF43
-const M_SCANLINE=&hFF44	
-const M_LYC=&hFF45
-const M_DMA=&hFF46
-const M_BGP=&hFF47
-const M_OBP0=&hFF48
-const M_OBP1=&hFF49
-const M_WY=&hFF4A
-const M_WX=&hFF4B
-const M_INTERRUPT_ENABLE=&hFFFF
+#define M_JOYP 				&hFF00
+#define M_SB 				&hFF01
+#define M_SC 				&hFF02
+#define M_DIV 				&hFF04
+#define M_TIMA 				&hFF05
+#define M_TMA 				&hFF06
+#define M_TAC				&hFF07
+#define M_INTERRUPT_FLAG	&hFF0F
+#define M_NR10				&hFF10
+#define M_NR11				&hFF11
+#define M_NR12				&hFF12
+#define M_NR13				&hFF13
+#define M_NR14				&hFF14
+#define M_NR21				&hFF16
+#define M_NR22				&hFF17
+#define M_NR23				&hFF18
+#define M_NR24				&hFF19
+#define M_NR30				&hFF1A
+#define M_NR31				&hFF1B
+#define M_NR32				&hFF1C
+#define M_NR33				&hFF1D
+#define M_NR34				&hFF1E
+#define M_NR41				&hFF20
+#define M_NR42				&hFF21
+#define M_NR43				&hFF22
+#define M_NR44				&hFF23
+#define M_NR50				&hFF24
+#define M_NR51				&hFF25
+#define M_NR52				&hFF26
+#define M_LCD_CONTROL		&hFF40
+#define M_LCD_STATUS 		&hFF41
+#define M_SCROLLY 			&hFF42
+#define M_SCROLLX 			&hFF43
+#define M_SCANLINE			&hFF44	
+#define M_LYC 				&hFF45
+#define M_DMA 				&hFF46
+#define M_BGP 				&hFF47
+#define M_OBP0 				&hFF48
+#define M_OBP1 				&hFF49
+#define M_WY 				&hFF4A
+#define M_WX 				&hFF4B
+#define M_KEY1				&hFF4D
+#define M_INTERRUPT_ENABLE 	&hFFFF
 
-const M_VRAM=&h8000
-const M_OAM=&hFE00
+#define M_VRAM 				&h8000
+#define M_OAM				&hFE00
+#define M_WAVE				&hFF30		'FF30 - FF3F
 
-#define C_VBLANK	(1 shl 0)
-#define C_LCDSTAT	(1 shl 1)
-#define C_TIMER		(1 shl 2)
-#define C_SERIAL	(1 shl 3)
-#define C_JOYPAD	(1 shl 4)
+#define C_VBLANK			(1 shl 0)
+#define C_LCDSTAT			(1 shl 1)
+#define C_TIMER				(1 shl 2)
+#define C_SERIAL			(1 shl 3)
+#define C_JOYPAD			(1 shl 4)
 
 union register
 	uint16 x
@@ -88,6 +111,8 @@ sub write_byte(adresse uint16, wert uint8)
 		select case as const speicher(M_MBC)
 			case &h01, &h02, &h03			'MBC1
 				MBC1()
+			case &h0F to &h13				'MBC3
+				MBC3()
 			case &h19 to &h1E				'MBC5
 				MBC5()
 			case else						'Alles andere ist wahrscheinlich eine Variation von MBC1
@@ -436,7 +461,10 @@ _
 #include once "gpu.bas"
 
 sub cpu_start()
-	af=&h01B0
+	select case as const speicher(M_GBC)
+		case &hC0 : af=&h11B0
+		case else : af=&h01B0
+	end select
 	bc=&h0013
 	de=&h00D8
 	hl=&h014A
@@ -450,24 +478,24 @@ sub cpu_start()
 	speicher(M_TIMA) = 				&h00
 	speicher(M_TMA) =				&h00
 	speicher(M_TAC) = 				&h00
-	speicher(&hFF10) = &h80
-	speicher(&hFF11) = &hBF
-	speicher(&hFF12) = &hF3
-	speicher(&hFF14) = &hBF
-	speicher(&hFF16) = &h3F
-	speicher(&hFF17) = &h00
-	speicher(&hFF19) = &hBF
-	speicher(&hFF1A) = &h7A
-	speicher(&hFF1B) = &hFF
-	speicher(&hFF1C) = &h9F
-	speicher(&hFF1E) = &hBF
-	speicher(&hFF20) = &hFF
-	speicher(&hFF21) = &h00
-	speicher(&hFF22) = &h00
-	speicher(&hFF23) = &hBF
-	speicher(&hFF24) = &h77
-	speicher(&hFF25) = &hF3
-	speicher(&hFF26) = &hF1
+	speicher(M_NR10) = 				&h80
+	speicher(M_NR11) = 				&hBF
+	speicher(M_NR12) = 				&hF3
+	speicher(M_NR14) = 				&hBF
+	speicher(M_NR21) = 				&h3F
+	speicher(M_NR22) = 				&h00
+	speicher(M_NR24) = 				&hBF
+	speicher(M_NR30) = 				&h7A
+	speicher(M_NR31) = 				&hFF
+	speicher(M_NR32) = 				&h9F
+	speicher(M_NR34) = 				&hBF
+	speicher(M_NR41) = 				&hFF
+	speicher(M_NR42) = 				&h00
+	speicher(M_NR43) = 				&h00
+	speicher(M_NR44) = 				&hBF
+	speicher(M_NR50) = 				&h77
+	speicher(M_NR51) = 				&hF3
+	speicher(M_NR52) = 				&hF1
 	speicher(M_LCD_CONTROL) = 		&h91
 	speicher(M_SCROLLY) = 			&h00
 	speicher(M_SCROLLX) = 			&h00
@@ -481,6 +509,8 @@ sub cpu_start()
 	
 	tasten(0) = &h0F
 	tasten(1) = &h0F
+	
+	rom_bank = 0 : rom_ram_bank = 0
 end sub
 
 sub cpu()
@@ -495,6 +525,23 @@ sub cpu()
 	else
 		if speicher(pc-1)=&h10 then
 			schreibe_log("[WARNUNG] OP: 0x10 'STOP'")
+			
+			if speicher(M_GBC) = &hC0 then
+				if speicher(M_KEY1) and &h01 > 0 then
+					if max_zyklen = 17556 then
+						max_zyklen = 17556 * 2
+						speicher(M_KEY1) = &h80
+						schreibe_log("Umschalten auf GBC")
+					else
+						max_zyklen = 17556
+						speicher(M_KEY1) = &h00
+						schreibe_log("Umschalten auf GB")
+					end if
+				end if
+			end if
+			
+			stop = 1
+			
 		else
 			schreibe_log("[FEHLER] Unbekannter OP: 0x"+hex(speicher(pc-1),2))
 		end if
